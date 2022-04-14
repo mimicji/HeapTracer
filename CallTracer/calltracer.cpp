@@ -47,27 +47,31 @@ static void event_exit(void)
 
 static void event_thread_init(void *drcontext)
 {
-    file_t f;
+	tls_t *tls_data = (tls_t *)dr_thread_alloc(drcontext, sizeof(tls_t));
+
     /* We're going to dump our data to a per-thread file.
      * On Windows we need an absolute path so we place it in
      * the same directory as our library. We could also pass
      * in a path as a client argument.
      */
-    f = log_file_open(client_id, drcontext, NULL /* client lib path */, "heaptrace",
+    tls_data->call_trace_file = log_file_open(client_id, drcontext, NULL /* client lib path */, "calltrace",
 #ifndef WINDOWS
                       DR_FILE_CLOSE_ON_FORK |
 #endif
                           DR_FILE_ALLOW_LARGE);
-    DR_ASSERT(f != INVALID_FILE);
+    tls_data->stack_depth = 0;
+    DR_ASSERT(tls_data->call_trace_file != INVALID_FILE);
 
     /* store it in the slot provided in the drcontext */
-    drmgr_set_tls_field(drcontext, tls_idx, (void *)(ptr_uint_t)f);
+    drmgr_set_tls_field(drcontext, tls_idx, (void *)tls_data);
 }
 
 static void
 event_thread_exit(void *drcontext)
 {
-    log_file_close((file_t)(ptr_uint_t)drmgr_get_tls_field(drcontext, tls_idx));
+    tls_t *tls_data = (tls_t *)drmgr_get_tls_field(drcontext, tls_idx);
+    log_file_close(tls_data->call_trace_file);
+	dr_thread_free(drcontext, tls_data, sizeof(tls_t));
 }
 
 static void print_address(file_t f, app_pc addr, const char *prefix)
@@ -109,9 +113,11 @@ static void print_address(file_t f, app_pc addr, const char *prefix)
 static void
 at_call(app_pc instr_addr, app_pc target_addr)
 {
-    file_t f = (file_t)(ptr_uint_t)drmgr_get_tls_field(dr_get_current_drcontext(), tls_idx);
+    void *drcontext = dr_get_current_drcontext();
+    tls_t *tls_data = (tls_t *)drmgr_get_tls_field(drcontext, tls_idx);
+    file_t f = tls_data->call_trace_file;
     dr_mcontext_t mc = { sizeof(mc), DR_MC_CONTROL /*only need xsp*/ };
-    dr_get_mcontext(dr_get_current_drcontext(), &mc);
+    dr_get_mcontext(drcontext, &mc);
     print_address(f, instr_addr, "CALL @ ");
     print_address(f, target_addr, "\t to ");
     dr_fprintf(f, "\tRSP=" PFX "\n", mc.xsp);
@@ -120,9 +126,11 @@ at_call(app_pc instr_addr, app_pc target_addr)
 
 static void at_call_ind(app_pc instr_addr, app_pc target_addr)
 {
-    file_t f = (file_t)(ptr_uint_t)drmgr_get_tls_field(dr_get_current_drcontext(), tls_idx);
-	dr_mcontext_t mc = { sizeof(mc), DR_MC_CONTROL /*only need xsp*/ };
-    dr_get_mcontext(dr_get_current_drcontext(), &mc);
+    void *drcontext = dr_get_current_drcontext();
+    tls_t *tls_data = (tls_t *)drmgr_get_tls_field(drcontext, tls_idx);
+    file_t f = tls_data->call_trace_file;
+    dr_mcontext_t mc = { sizeof(mc), DR_MC_CONTROL /*only need xsp*/ };
+    dr_get_mcontext(drcontext, &mc);
 	print_address(f, instr_addr, "CALL INDIRECT @ ");
     print_address(f, target_addr, "\t to ");
     dr_fprintf(f, "\tRSP=" PFX "\n", mc.xsp);
@@ -132,9 +140,11 @@ static void at_call_ind(app_pc instr_addr, app_pc target_addr)
 static void
 at_return(app_pc instr_addr, app_pc target_addr)
 {
-    file_t f = (file_t)(ptr_uint_t)drmgr_get_tls_field(dr_get_current_drcontext(), tls_idx);
+    void *drcontext = dr_get_current_drcontext();
+    tls_t *tls_data = (tls_t *)drmgr_get_tls_field(drcontext, tls_idx);
+    file_t f = tls_data->call_trace_file;
     dr_mcontext_t mc = { sizeof(mc), DR_MC_CONTROL /*only need xsp*/ };
-    dr_get_mcontext(dr_get_current_drcontext(), &mc);
+    dr_get_mcontext(drcontext, &mc);
 	print_address(f, instr_addr, "RETURN @ ");
     print_address(f, target_addr, "\t to ");
     dr_fprintf(f, "\tRSP=" PFX "\n", mc.xsp);

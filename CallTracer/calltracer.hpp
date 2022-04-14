@@ -35,4 +35,11 @@
 #define MAX_SYM_RESULT 256
 #define MAX_FILE_PATH 256
 
+typedef struct _tls_t
+{
+    file_t call_trace_file;
+    int64_t stack_depth;
+} tls_t;
+
+
 #endif // __HEAPTRACER_HPP__
