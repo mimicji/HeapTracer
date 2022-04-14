@@ -224,7 +224,7 @@ static void module_load_event(void *drcontext, const module_data_t *mod, bool lo
     {
         bool ok = drwrap_wrap(malloc_towrap, wrap_malloc_pre, wrap_malloc_post);
         if (ok) {
-            LOG("<wrapped " MALLOC_NAME " @" PFX "", malloc_towrap);
+            LOG("<wrapped " MALLOC_NAME " @" PFX ">", malloc_towrap);
         } else {
             LOG("<FAILED to wrap " MALLOC_NAME " @" PFX ": already wrapped?", malloc_towrap);
         }
@@ -236,7 +236,7 @@ static void module_load_event(void *drcontext, const module_data_t *mod, bool lo
     {
         bool ok = drwrap_wrap(free_towrap, wrap_free_pre, wrap_free_post);
         if (ok) {
-            LOG("<wrapped " FREE_NAME " @" PFX "", free_towrap);
+            LOG("<wrapped " FREE_NAME " @" PFX ">", free_towrap);
         } else {
             LOG("<FAILED to wrap " FREE_NAME " @" PFX ": already wrapped?", free_towrap);
         }
