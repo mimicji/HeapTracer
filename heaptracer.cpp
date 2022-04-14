@@ -179,7 +179,7 @@ at_return(app_pc instr_addr, app_pc target_addr)
     print_indentation(f, tls_data->stack_depth);
 	print_address(f, instr_addr, "RETURN @ ");
     print_indentation(f, tls_data->stack_depth);
-    print_address(f, target_addr, "  TO ");
+    print_address(f, target_addr, "  to ");
     print_indentation(f, tls_data->stack_depth);
     dr_fprintf(f, "  RSP=" PFX "\n", mc.xsp);
     tls_data->stack_depth--;
