@@ -6,7 +6,7 @@ A simple tracer that records function calls and heap operations.
 ## Usage
 On Linux:
 - Build: ./build.sh
-- Run: ./heaptracer.sh <application>
+- Run: ./heaptracer.sh \<application\>
   
 On Windows:
 - Build&Run: Currently no auto script supported. Please check [DynamoRIO Document](https://dynamorio.org/page_build_client.html).
