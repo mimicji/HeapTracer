@@ -8,7 +8,7 @@ static dr_emit_flags_t event_app_instruction(void *drcontext, void *tag, instrli
 void log_file_close(file_t log);
 file_t log_file_open(client_id_t id, void *drcontext, const char *path, const char *name,
               uint flags);
-void print_indentation(file_t f, int64_t depth);
+void print_indentation(file_t f, int depth);
 static void module_load_event(void *drcontext, const module_data_t *mod, bool loaded);
 static void print_qualified_function_name(file_t f, app_pc pc);
 static void wrap_malloc_pre(void *wrapcxt, OUT void **user_data);
@@ -39,10 +39,11 @@ DR_EXPORT void dr_client_main(client_id_t id, int argc, const char *argv[])
     }
 
     tls_idx = drmgr_register_tls_field();
+
     DR_ASSERT(tls_idx > -1);
 
     // Improve performance
-    drwrap_set_global_flags(static_cast<drwrap_global_flags_t>(DRWRAP_NO_FRILLS | DRWRAP_FAST_CLEANCALLS));
+    // drwrap_set_global_flags(static_cast<drwrap_global_flags_t>(DRWRAP_NO_FRILLS | DRWRAP_FAST_CLEANCALLS));
 
 	LOG("Start tracing.");
 }
@@ -291,6 +292,8 @@ static void wrap_malloc_pre(void *wrapcxt, OUT void **user_data)
     size_t sz = (size_t)drwrap_get_arg(wrapcxt, IF_WINDOWS_ELSE(2, 0));
 
     dr_mcontext_t *mc = drwrap_get_mcontext(wrapcxt);
+
+#ifndef WINDOWS 
     // Walk the callstack.
     drcallstack_walk_t *walk;
     drcallstack_status_t res = drcallstack_init_walk(mc, &walk);
@@ -315,7 +318,8 @@ static void wrap_malloc_pre(void *wrapcxt, OUT void **user_data)
     // whether to record or act on the callstack quality.
     res = drcallstack_cleanup_walk(walk);
     DR_ASSERT(res == DRCALLSTACK_SUCCESS);
-    
+#endif
+
     dr_fprintf(f, "[%llu] %s(0x%llx) = ", tls_data->alloc_cnt, MALLOC_NAME, sz);
 }
 
@@ -339,6 +343,7 @@ static void wrap_free_pre(void *wrapcxt, OUT void **user_data)
     /* free(ptr) or HeapAlloc(heap, flags, ptr) */
     size_t sz = (size_t)drwrap_get_arg(wrapcxt, IF_WINDOWS_ELSE(2, 0));
 
+#ifndef WINDOWS 
     dr_mcontext_t *mc = drwrap_get_mcontext(wrapcxt);
     // Walk the callstack.
     drcallstack_walk_t *walk;
@@ -364,7 +369,8 @@ static void wrap_free_pre(void *wrapcxt, OUT void **user_data)
     // whether to record or act on the callstack quality.
     res = drcallstack_cleanup_walk(walk);
     DR_ASSERT(res == DRCALLSTACK_SUCCESS);
-    
+#endif
+
     dr_fprintf(f, "[%llu] %s(0x%llx)\n", tls_data->free_cnt, FREE_NAME, sz);
 }
 
@@ -421,9 +427,9 @@ void log_file_close(file_t log)
     dr_close_file(log);
 }
 
-void print_indentation(file_t f, int64_t depth)
+void print_indentation(file_t f, int depth)
 {
-    int64_t i;
+    int i;
     DR_ASSERT(depth >=0);
     for (i=1; i<depth; i++)
     {

@@ -9,8 +9,10 @@
 #include "dr_defines.h"
 #include "drsyms.h"
 #include "drwrap.h"
+#ifndef WINDOWS 
+// Currently DynamoRIO does not support call stack on Winodws
 #include "drcallstack.h"
-
+#endif
 
 #define PROJECT_NAME "HeapTracer"
 
@@ -30,10 +32,10 @@
 #define NULL_TERMINATE_BUFFER(buf) BUFFER_LAST_ELEMENT(buf) = 0
 
 #ifndef LOG
-#define LOG(...) {printf("[%s] ", PROJECT_NAME);printf(__VA_ARGS__); printf("\n");}
+#define LOG(...) {dr_printf("[%s] ", PROJECT_NAME);dr_printf(__VA_ARGS__); dr_printf("\n");}
 #endif
 #ifndef DIE
-#define DIE() {printf("[%s] ", PROJECT_NAME); printf("Abort at %s:%d\n", __FILE__, __LINE__); exit(1);}
+#define DIE() {dr_printf("[%s] ", PROJECT_NAME); dr_printf("Abort at %s:%d\n", __FILE__, __LINE__); exit(1);}
 #endif
 
 #define MAX_SYM_RESULT 256
@@ -46,9 +48,9 @@ typedef struct _tls_t
 {
     file_t call_trace_file;
     file_t heap_trace_file;
-    int64_t stack_depth;
-    u_int64_t alloc_cnt;
-    u_int64_t free_cnt;
+    int stack_depth;
+    unsigned int alloc_cnt;
+    unsigned int free_cnt;
 } tls_t;
 
 
