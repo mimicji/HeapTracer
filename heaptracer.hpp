@@ -8,16 +8,20 @@
 #include "drx.h"
 #include "dr_defines.h"
 #include "drsyms.h"
+#include "drwrap.h"
+#include "drcallstack.h"
 
 
-#define PROJECT_NAME "CallTracer"
+#define PROJECT_NAME "HeapTracer"
 
 #ifdef WINDOWS
 #    define IF_WINDOWS(x) x
 #    define IF_UNIX_ELSE(x, y) y
+#    define IF_WINDOWS_ELSE(x, y) x
 #else
 #    define IF_WINDOWS(x)
 #    define IF_UNIX_ELSE(x, y) x
+#    define IF_WINDOWS_ELSE(x, y) y
 #endif
 
 #define BUFFER_SIZE_BYTES(buf) sizeof(buf)
@@ -35,10 +39,16 @@
 #define MAX_SYM_RESULT 256
 #define MAX_FILE_PATH 256
 
+#define MALLOC_NAME IF_WINDOWS_ELSE("HeapAlloc", "malloc")
+#define FREE_NAME IF_WINDOWS_ELSE("HeapFree", "free")
+
 typedef struct _tls_t
 {
     file_t call_trace_file;
+    file_t heap_trace_file;
     int64_t stack_depth;
+    u_int64_t alloc_cnt;
+    u_int64_t free_cnt;
 } tls_t;
 
 

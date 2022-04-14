@@ -45,7 +45,8 @@ if [ -d $dynamorio_path ]; then
             exit 1
         fi
     fi
-    echo -e "#!/bin/bash\n$drrun_path -c $script_dir/build/libcalltracer.so -- \$@\n" > $script_dir/trace_dr.sh
+    echo -e "#!/bin/bash\n$drrun_path -c $script_dir/build/libheaptracer.so -- \$@" > $script_dir/trace_dr.sh
+    # echo -e "mv ./build/*.log ./" >> $script_dir/trace_dr.sh
     chmod 777 $script_dir/trace_dr.sh
     echo "$0: Done. Run \"trace_dr.sh <application>\" to start tracing."
 else # Unable to find DynamoRIO
